@@ -88,14 +88,14 @@ def main():
     ###### Main program ####
     ########################
     print("Start")
-    nucleotides_Dataframe = pd.read_csv("/Users/Pinedasans/VDJ_V2/Data/data_for_cloneInfered_IGH.txt",sep="\t")
+    nucleotides_Dataframe = pd.read_csv("/Users/Pinedasans/VDJ_V2/Data/data_for_cloneInfered_allvgenes_IGH.txt",sep="\t")
     
     result_ClonesInfered = pd.DataFrame([])
     result = ProcessSample(nucleotides_Dataframe)
     result_ClonesInfered = result_ClonesInfered.append(result)
 
     ###Result
-    result_ClonesInfered.to_csv('/Users/Pinedasans/VDJ_V2/Data/ClonesInfered_IGH.csv')
+    result_ClonesInfered.to_csv('/Users/Pinedasans/VDJ_V2/Data/ClonesInfered_allvgenes_IGH.csv')
     print("End")
 
 main()
