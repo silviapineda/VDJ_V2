@@ -56,11 +56,16 @@ load("Data/IGH_adaptive.RData")
 ##############################
 ### Quality Control
 #############################
+##plot histogram for the V score
+hist(data$V_SCORE,xlab = "V gene score", main="Histogram: Adaptive Data")
+abline(v=140,col="red")
 
 ##Discard all the V_score < 140
-data_qc<-data[which(data$V_SCORE>=140),]
+#data_qc<-data[which(data$V_SCORE>=140),]
 ##Discard the non-functional sequences
-data_qc<-data_qc[which(data_qc$FUNCTIONAL=="TRUE"),]
+data_qc<-data[which(data$FUNCTIONAL=="TRUE"),]
+##Discar indels
+data_qc<-data_qc[which(data_qc$INDELS=="FALSE"),]
 
 ##Read the clinical annotations
 clin_annot <- read.csv("/Users/Pinedasans/VDJ_V2//Data/ClinicalData.csv")
@@ -69,8 +74,8 @@ rownames(clin_annot) <- clin_annot$Adaptive.Sample.ID
 #MERGE DATA
 clin_annot$Phenotype<-factor(clin_annot$Phenotype)
 data_qc$clin = clin_annot[data_qc$sample,3] ###Add the type of clinical endpoint
-data_qc$time_months = clin_annot[data_qc$sample,9] ###Add the time it was taking
-data_qc$time_months_round = clin_annot[data_qc$sample,10] ###Add the time it was taking
+data_qc$time_months = clin_annot[data_qc$sample,4] ###Add the time it was taking
+data_qc$time_days = clin_annot[data_qc$sample,5] ###Add the time it was taking
 
 ##Extract the gene from the segment with the allele
 data_qc$v_gene <- gsub("\\*", "", substr(data_qc$V_CALL, 1, 8))
@@ -85,11 +90,11 @@ data_qc$V_J_lenghCDR3 = paste(data_qc$v_gene,data_qc$j_gene,data_qc$CDR3_length,
 
 ###save the data to call the clones by all samples
 data_clonesInference<-data_qc[,c("SEQUENCE_ID","sample","CDR3_IGBLAST","CDR3_length","v_gene","j_gene","V_J_lenghCDR3")]
-write.table(data_clonesInference,file="Data/data_for_cloneInfered_IGH.txt",row.names = F,sep="\t")
+write.table(data_clonesInference,file="Data/data_for_cloneInfered_allvgenes_IGH.txt",row.names = F,sep="\t")
 
 ### After passing the nucleotides.py
 ##Read the clones and merge with the data
-nucleotides<-read.csv("Data/ClonesInfered_IGH.csv")
+nucleotides<-read.csv("Data/ClonesInfered_allvgenes_IGH.csv")
 data_merge<-merge(data_qc,nucleotides[,c("SEQUENCE_ID","CloneId")],by=c("SEQUENCE_ID"))
 ##Count number of reads and  clones per sample 
 data_merge$V_J_lenghCDR3_CloneId = paste(data_merge$V_J_lenghCDR3,data_merge$CloneId,sep="_")
@@ -99,5 +104,5 @@ clones<-data.matrix(table(clones_count$sample))
 read_count <- table(data_merge$sample)
 id_sample<-match(clin_annot$Adaptive.Sample.ID,rownames(clones))
 reads_clones_annot <- cbind(clin_annot, clones[id_sample,1],read_count[id_sample])
-colnames(reads_clones_annot)[44:46]<-c("clones","sample","reads")
-save(data_merge,reads_clones_annot,file="Data/VDJ_DataIGH.Rdata")
+colnames(reads_clones_annot)[c(46:48)]<-c("clones","sample","reads")
+save(data_merge,reads_clones_annot,file="Data/VDJ_allVgenes_DataIGH.Rdata")
