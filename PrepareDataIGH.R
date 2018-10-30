@@ -62,20 +62,26 @@ abline(v=140,col="red")
 
 ##Discard all the V_score < 140
 #data_qc<-data[which(data$V_SCORE>=140),]
+
+#dim(data)=5878550
 ##Discard the non-functional sequences
-data_qc<-data[which(data$FUNCTIONAL=="TRUE"),]
-##Discar indels
-data_qc<-data_qc[which(data_qc$INDELS=="FALSE"),]
+data_qc<-data[which(data$FUNCTIONAL=="TRUE"),] #4896186
+##Discard indels
+data_qc<-data_qc[which(data_qc$INDELS=="FALSE"),] #4894573
+##Discard stops
+data_qc<-data_qc[which(data_qc$STOP=="FALSE"),] #4894573
+##Discard In_FRAME
+data_qc<-data_qc[which(data_qc$IN_FRAME=="TRUE"),] #4894573
 
 ##Read the clinical annotations
-clin_annot <- read.csv("/Users/Pinedasans/VDJ_V2//Data/ClinicalData.csv")
-rownames(clin_annot) <- clin_annot$Adaptive.Sample.ID
+clin_annot <- read.csv("/Users/Pinedasans/VDJ_V2//Data/ClinicalData_V3.csv")
+rownames(clin_annot) <- clin_annot$Adaptive_Sample_ID
 
 #MERGE DATA
 clin_annot$Phenotype<-factor(clin_annot$Phenotype)
-data_qc$clin = clin_annot[data_qc$sample,3] ###Add the type of clinical endpoint
-data_qc$time_months = clin_annot[data_qc$sample,4] ###Add the time it was taking
-data_qc$time_days = clin_annot[data_qc$sample,5] ###Add the time it was taking
+data_qc$clin = clin_annot[data_qc$sample,10] ###Add the type of clinical endpoint
+data_qc$time_days = clin_annot[data_qc$sample,9] ###Add the time it was taking
+data_qc$time_followup_days = clin_annot[data_qc$sample,7] ###Add the time it was taking
 
 ##Extract the gene from the segment with the allele
 data_qc$v_gene <- gsub("\\*", "", substr(data_qc$V_CALL, 1, 8))
@@ -102,7 +108,7 @@ clones_count<- unique(data_merge[,c("sample","V_J_lenghCDR3_CloneId")])
 clones<-data.matrix(table(clones_count$sample))
 ##Read counts per sample and data point
 read_count <- table(data_merge$sample)
-id_sample<-match(clin_annot$Adaptive.Sample.ID,rownames(clones))
+id_sample<-match(clin_annot$Adaptive_Sample_ID,rownames(clones))
 reads_clones_annot <- cbind(clin_annot, clones[id_sample,1],read_count[id_sample])
-colnames(reads_clones_annot)[c(46:48)]<-c("clones","sample","reads")
-save(data_merge,reads_clones_annot,file="Data/VDJ_allVgenes_DataIGH.Rdata")
+colnames(reads_clones_annot)[c(45:47)]<-c("clones","sample","reads")
+save(data_merge,reads_clones_annot,file="Data/VDJ_DataIGH.Rdata")
