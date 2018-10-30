@@ -104,6 +104,8 @@ annot_qc$time_cat<-ifelse(annot_qc$time_days<0,"<0",
                                  ifelse(annot_qc$time_days>0 & annot_qc$time_days<180,"0-6",
                                         ifelse(annot_qc$time_days>=180,">=6",NA))))
 annot_qc$time_cat<-factor(annot_qc$time_cat)
+##save for analysis
+save(annot_qc,file="Data/annot_qc.Rdata")
 
 ####Demographics####
 annot_qc_unique<-annot_qc[which(duplicated(annot_qc$sample_id)==F),]
