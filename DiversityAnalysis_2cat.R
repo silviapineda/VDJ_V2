@@ -205,6 +205,37 @@ tiff("Results/Table_clones_6_20.tiff",res=300,w=4000,h=500)
 grid.table(example_table)
 dev.off()
 
+#############################
+###Indivuduals over 3  ####
+###########################
+annot_qc_time0_3<-annot_qc[which(annot_qc$time_days<=0 & annot_qc$RecipientAgeTX>3),]
+annot_qc_time6_3<-annot_qc[which(annot_qc$time_days>=180 & annot_qc$RecipientAgeTX>3),]
+
+####Association with phenotype
+tiff("Results/boxplot_clones_0_6_3age.tiff",h=1800,w=2000,res=300)
+p4<-ggplot(annot_qc_time0_3, aes(factor(Phenotype),clones,fill=Phenotype))  + ylim(-1000,105000) +
+  geom_boxplot() + scale_fill_manual(values=c("chartreuse4", "darkorange2")) + #theme(text = element_text(size=15)) +
+  labs(title="time <=0",x="Clinical outcome", y = "Number of clones")   + theme(legend.position="none") #+ stat_summary(fun.data=data_summary)
+p5<-ggplot(annot_qc_time6_3, aes(factor(Phenotype),clones,fill=Phenotype))  + ylim(-1000,105000) +
+  geom_boxplot() + scale_fill_manual(values=c("chartreuse4","darkorange2")) + #theme(text = element_text(size=15)) +
+  labs(title="time >=6",x="Clinical outcome", y = "Number of clones")   + theme(legend.position="none") #+ stat_summary(fun.data=data_summary)
+
+grid.arrange(p4,p5,ncol=3)
+dev.off()
+
+##regression
+explanatory = c("Phenotype","RecipientAgeTX")
+dependent = 'clones'
+example_table<-annot_qc_time0_3 %>% 
+  finalfit(dependent, explanatory)
+tiff("Results/Table_clones_<=0_3.tiff",res=300,w=4000,h=500)
+grid.table(example_table)
+dev.off()
+example_table<-annot_qc_time6_3 %>% 
+  finalfit(dependent, explanatory)
+tiff("Results/Table_clones_6_3.tiff",res=300,w=4000,h=500)
+grid.table(example_table)
+dev.off()
 
 #######################
 ###Long follow-up ####
