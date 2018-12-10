@@ -74,14 +74,16 @@ data_qc<-data_qc[which(data_qc$STOP=="FALSE"),] #4894573
 data_qc<-data_qc[which(data_qc$IN_FRAME=="TRUE"),] #4894573
 
 ##Read the clinical annotations
-clin_annot <- read.csv("/Users/Pinedasans/VDJ_V2//Data/ClinicalData_V3.csv")
+clin_annot <- read.csv("/Users/Pinedasans/VDJ_V2//Data/ClinicalData_V5.csv")
 rownames(clin_annot) <- clin_annot$Adaptive_Sample_ID
 
 #MERGE DATA
-clin_annot$Phenotype<-factor(clin_annot$Phenotype)
-data_qc$clin = clin_annot[data_qc$sample,10] ###Add the type of clinical endpoint
-data_qc$time_days = clin_annot[data_qc$sample,9] ###Add the time it was taking
-data_qc$time_followup_days = clin_annot[data_qc$sample,7] ###Add the time it was taking
+clin_annot$Phenotype_CADI<-factor(clin_annot$Phenotype_CADI)
+data_qc$clin = clin_annot[data_qc$sample,5] ###Add the type of clinical endpoint
+data_qc$clin2 = clin_annot[data_qc$sample,6] ###Add the type of clinical endpoint
+data_qc$time_days = clin_annot[data_qc$sample,13] ###Add the time it was taking
+
+data_qc$follow_up = clin_annot[data_qc$sample,3] ###Add the time it was taking
 
 ##Extract the gene from the segment with the allele
 data_qc$v_gene <- gsub("\\*", "", substr(data_qc$V_CALL, 1, 8))
@@ -108,7 +110,7 @@ clones_count<- unique(data_merge[,c("sample","V_J_lenghCDR3_CloneId")])
 clones<-data.matrix(table(clones_count$sample))
 ##Read counts per sample and data point
 read_count <- table(data_merge$sample)
-id_sample<-match(clin_annot$Adaptive_Sample_ID,rownames(clones))
+id_sample<-match(clin_annot$Adaptive.Sample.ID,rownames(clones))
 reads_clones_annot <- cbind(clin_annot, clones[id_sample,1],read_count[id_sample])
-colnames(reads_clones_annot)[c(45:47)]<-c("clones","sample","reads")
+colnames(reads_clones_annot)[c(48:50)]<-c("clones","sample","reads")
 save(data_merge,reads_clones_annot,file="Data/VDJ_DataIGH.Rdata")
