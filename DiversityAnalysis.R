@@ -68,27 +68,28 @@ diversity<-read.csv("Data/diversity.csv")
 #clonality_recon<-(1-entropy_norm)
 
 ##Put all diversity measures together
-id<-match(reads_clones_annot$Adaptive_Sample_ID,diversity$X)
+id<-match(reads_clones_annot$Adaptive.Sample.ID,diversity$X)
 reads_clones_annot<-cbind(reads_clones_annot,diversity[id,2:4])
 
 ####QC on the number of clones
+annot_qc<-annot_qc[-which(annot_qc$Phenotype_CADI=="PNR"),]
 annot_qc<-reads_clones_annot[which(reads_clones_annot$clones>100),]
-annot_qc$Phenotype<-factor(annot_qc$Phenotype,levels = c("NoRej","bAR","AR"))
-annot_qc$followup_days<-as.numeric(as.character(annot_qc$followup_days))
-annot_qc$DonorAge<-as.numeric(as.character(annot_qc$DonorAge))
+annot_qc$Phenotype<-factor(annot_qc$Phenotype_CADI,levels = c("NP","AR","PR"))
+annot_qc$RecipientAgeTX<-as.numeric(as.character(annot_qc$Recipient.Age..TX))
+annot_qc$time_days<-annot_qc$Sample.Time.Diference.from.TX..days.
+annot_qc$followup <- as.numeric(gsub("\\*", "", substr(annot_qc$BX.time.point, 2, 3)))
+
 tiff("Results/Time_clones.tiff",res=300,w=2500,h=2000)
-ggplot(data=annot_qc, aes(x=time_days, y=clones, group=sample_id, shape=Phenotype, color=Phenotype)) +
+ggplot(data=annot_qc, aes(x=time_days, y=clones, group=Sample.ID, shape=Phenotype, color=Phenotype)) +
   geom_line() +
   geom_point() +
-  #ylim(0,120000) +
+  ylim(0,120000) +
   scale_colour_manual(values=c("chartreuse4", "dodgerblue3","darkorange2")) +
   ggtitle("Number Clones Longitudinal")
 dev.off()
 
-annot_qc$followup_days<-replace(annot_qc$followup_days,annot_qc$followup_days<0,0)
-annot_qc$followup_month<-annot_qc$followup_days/30
 tiff("Results/Follow_up.tiff",res=300,w=2500,h=2000)
-ggplot(data=annot_qc, aes(x=followup_month, y=sample, shape=Phenotype, color=Phenotype)) +
+ggplot(data=annot_qc, aes(x=followup, y=sample, shape=Phenotype, color=Phenotype)) +
   geom_line() +
   geom_point() +
   #ylim(0,120000) +
@@ -97,18 +98,19 @@ ggplot(data=annot_qc, aes(x=followup_month, y=sample, shape=Phenotype, color=Phe
 dev.off()
 
 ###Define new variables
-annot_qc$AgeRec<-ifelse(annot_qc$RecipientAgeTX<=20,"<=20",">20")
+annot_qc$AgeRec<-ifelse(annot_qc$Recipient.Age..TX<=20,"<=20",">20")
 annot_qc$AgeRec<-factor(annot_qc$AgeRec)
-annot_qc$time_cat<-ifelse(annot_qc$time_days<0,"<0",
-                          ifelse(annot_qc$time_days==0,"=0",
-                                 ifelse(annot_qc$time_days>0 & annot_qc$time_days<180,"0-6",
-                                        ifelse(annot_qc$time_days>=180,">=6",NA))))
+annot_qc$time_days<-annot_qc$Sample.Time.Diference.from.TX..days.
+annot_qc$time_cat<-ifelse(annot_qc$Sample.Time.Diference.from.TX..days.<0,"<0",
+                          ifelse(annot_qc$Sample.Time.Diference.from.TX..days.==0,"=0",
+                                 ifelse(annot_qc$Sample.Time.Diference.from.TX..days.>0 & annot_qc$Sample.Time.Diference.from.TX..days.<180,"0-6",
+                                        ifelse(annot_qc$Sample.Time.Diference.from.TX..days.>=180,">=6",NA))))
 annot_qc$time_cat<-factor(annot_qc$time_cat)
 ##save for analysis
 save(annot_qc,file="Data/annot_qc.Rdata")
 
 ####Demographics####
-annot_qc_unique<-annot_qc[which(duplicated(annot_qc$sample_id)==F),]
+annot_qc_unique<-annot_qc[which(duplicated(annot_qc$Sample.ID)==F),]
 table(annot_qc_unique$Phenotype)
 ###follow-up time
 summary(annot_qc_unique$followup_month[which(annot_qc_unique$Phenotype=="NoRej")],na.rm=T)
@@ -280,6 +282,29 @@ dev.off()
 
 summary(glm(clones~Phenotype, data=annot_qc_time0))
 summary(glm(clones~Phenotype, data=annot_qc_time6))
+
+####################
+###Follow up > 24##
+###################
+annot_qc_time0_followup_24<-annot_qc_time0[which(annot_qc_time0$followup>=24),]
+annot_qc_time6_followup_24<-annot_qc_time6[which(annot_qc_time6$time_days>=24),]
+
+####Association with phenotype
+tiff("Results/boxplot_clones_0_6.tiff",h=1800,w=2000,res=300)
+p4<-ggplot(annot_qc_time0_followup_24, aes(factor(Phenotype),clones,fill=Phenotype))  + ylim(-1000,105000) +
+  geom_boxplot() + scale_fill_manual(values=c("chartreuse4","dodgerblue3","darkorange2")) + #theme(text = element_text(size=15)) +
+  labs(title="time <=0",x="Clinical outcome", y = "Number of clones")   + theme(legend.position="none") #+ stat_summary(fun.data=data_summary)
+p5<-ggplot(annot_qc_time6_followup_24, aes(factor(Phenotype),clones,fill=Phenotype))  + ylim(-1000,105000) +
+  geom_boxplot() + scale_fill_manual(values=c("chartreuse4","dodgerblue3","darkorange2")) + #theme(text = element_text(size=15)) +
+  labs(title="time >=6",x="Clinical outcome", y = "Number of clones")   + theme(legend.position="none") #+ stat_summary(fun.data=data_summary)
+
+grid.arrange(p4,p5,ncol=3)
+dev.off()
+
+summary(glm(clones~Phenotype, data=annot_qc_time0_followup_24))
+summary(glm(clones~Phenotype, data=annot_qc_time6_followup_24))
+
+
 
 #############################
 ###Indivuduals under 20 ####
