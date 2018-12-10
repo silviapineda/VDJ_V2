@@ -33,13 +33,12 @@ COLOR=c("chartreuse4","darkorange2")
 setwd("/Users/Pinedasans/VDJ_V2/")
 load("Data/annot_qc.Rdata")
 
-annot_qc$Phenotype<-replace(annot_qc$Phenotype,annot_qc$Phenotype=="bAR","AR")
-annot_qc$Phenotype<-factor(annot_qc$Phenotype)
+annot_qc$Phenotype<-factor(annot_qc$Phenotype2,levels=c("NR","AR"))
 
 # Table 1 - Patient demographics by variable of interest ----
-annot_qc_unique<-annot_qc[which(duplicated(annot_qc$sample_id)==F),]
+annot_qc_unique<-annot_qc[which(duplicated(annot_qc$Sample.ID)==F),]
 table(annot_qc_unique$Phenotype)
-explanatory = c("RecipientAgeTX", "Immusosupression","DonorType", "RecipientSex","followup_month")
+explanatory = c("RecipientAgeTX", "Immusosupression..1.SF..2.SB.","Donor.Type", "Recipient.Sex","followup")
 dependent = 'Phenotype'
 table<-annot_qc_unique %>%
   summary_factorlist(dependent, explanatory, p=TRUE, add_dependent_label=TRUE)
@@ -58,7 +57,7 @@ dev.off()
 
 # Table 3 - Patient demographics by variable of interest and time point <=0
 annot_qc_unique_0<-annot_qc[which(annot_qc$time_days<=0),]
-explanatory = c("RecipientAgeTX", "Immusosupression","DonorType", "RecipientSex","followup_month")
+explanatory = c("RecipientAgeTX", "Immusosupression..1.SF..2.SB.","Donor.Type", "Recipient.Sex","followup")
 dependent = 'Phenotype'
 table<-annot_qc_unique_0 %>%
   summary_factorlist(dependent, explanatory, p=TRUE, add_dependent_label=TRUE)
@@ -68,7 +67,7 @@ dev.off()
 
 # Table 4 - Patient demographics by variable of interest and time point >=6
 annot_qc_unique_6<-annot_qc[which(annot_qc$time_days>=180),]
-explanatory = c("RecipientAgeTX", "Immusosupression","DonorType", "RecipientSex","followup_month")
+explanatory = c("RecipientAgeTX", "Immusosupression..1.SF..2.SB.","Donor.Type", "Recipient.Sex","followup")
 dependent = 'Phenotype'
 table<-annot_qc_unique_6 %>%
   summary_factorlist(dependent, explanatory, p=TRUE, add_dependent_label=TRUE)
@@ -78,7 +77,7 @@ dev.off()
 
 # Plot for time
 tiff("Results/Time_clones.tiff",res=300,w=2500,h=2000)
-ggplot(data=annot_qc, aes(x=time_days, y=clones, group=sample_id, shape=Phenotype, color=Phenotype)) +
+ggplot(data=annot_qc, aes(x=time_days, y=clones, group=Sample.ID, shape=Phenotype, color=Phenotype)) +
   geom_line() +
   geom_point() +
   #ylim(0,120000) +
@@ -87,10 +86,8 @@ ggplot(data=annot_qc, aes(x=time_days, y=clones, group=sample_id, shape=Phenotyp
 dev.off()
 
 # Plot for follow-up
-annot_qc$followup_days<-replace(annot_qc$followup_days,annot_qc$followup_days<0,0)
-annot_qc$followup_month<-annot_qc$followup_days/30
 tiff("Results/Follow_up.tiff",res=300,w=2500,h=2000)
-ggplot(data=annot_qc, aes(x=followup_month, y=sample, shape=Phenotype, color=Phenotype)) +
+ggplot(data=annot_qc, aes(x=followup, y=Sample.ID, shape=Phenotype, color=Phenotype)) +
   geom_line() +
   geom_point() +
   #ylim(0,120000) +
@@ -240,8 +237,8 @@ dev.off()
 #######################
 ###Long follow-up ####
 ######################
-annot_qc_time0_24<-annot_qc[which(annot_qc$time_days<=0 & annot_qc$followup_month>=6),]
-annot_qc_time6_24<-annot_qc[which(annot_qc$time_days>=180 & annot_qc$followup_month>=6),]
+annot_qc_time0_24<-annot_qc[which(annot_qc$time_days<=0 & annot_qc$followup>=24),]
+annot_qc_time6_24<-annot_qc[which(annot_qc$time_days>=180 & annot_qc$followup>=24),]
 
 ####Association with phenotype
 tiff("Results/boxplot_clones_0_6_24followup.tiff",h=1800,w=2000,res=300)
@@ -260,12 +257,12 @@ explanatory = c("Phenotype")
 dependent = 'clones'
 example_table<-annot_qc_time0_24 %>% 
   finalfit(dependent, explanatory)
-tiff("Results/Table_clones_<=0_20.tiff",res=300,w=4000,h=500)
+tiff("Results/Table_clones_<=0_24followip.tiff",res=300,w=4000,h=500)
 grid.table(example_table)
 dev.off()
 example_table<-annot_qc_time6_24 %>% 
   finalfit(dependent, explanatory)
-tiff("Results/Table_clones_6_20.tiff",res=300,w=4000,h=500)
+tiff("Results/Table_clones_6_24followup.tiff",res=300,w=4000,h=500)
 grid.table(example_table)
 dev.off()
 
@@ -402,5 +399,22 @@ tiff("Results/Table_All_6.tiff",res=300,w=4000,h=1000)
 grid.table(example_table)
 dev.off()
 
+##################################
+### Match by age at transplant ###
+##################################
+library(e1071)
+m <- matchControls(annot_qc_time0$Phenotype ~  annot_qc_time0$Recipient.Age..TX,
+                                    contlabel = "NR",caselabel = "AR",replace = T)
 
+annot_qc_matched_0<-rbind(annot_qc_time0[as.numeric(m$cases),],annot_qc_time0[as.numeric(m$controls),])
 
+p1<-ggplot(annot_qc_matched_0, aes(factor(Phenotype),clones,fill=Phenotype))  + ylim(-1000,105000) +
+  geom_boxplot() + scale_fill_manual(values=c("chartreuse4", "darkorange2")) + #theme(text = element_text(size=15)) +
+  labs(title="time <=0",x="Clinical outcome", y = "Number of clones")   + theme(legend.position="none") #+ stat_summary(fun.data=data_summary)
+print(p1)
+
+explanatory = c("Phenotype","Recipient.Age..TX")
+dependent = 'clones'
+example_table<-annot_qc_matched_0 %>% 
+  finalfit(dependent, explanatory)
+grid.table(example_table)
