@@ -32,6 +32,7 @@ COLOR=c("chartreuse4","darkorange2")
 
 setwd("/Users/Pinedasans/VDJ_V2/")
 load("Data/annot_qc.Rdata")
+annot_qc$Phenotype<-factor(annot_qc$Phenotype2,levels = c("NR","AR"))
 
 # Table 1 - Patient demographics by variable of interest ----
 annot_qc_unique<-annot_qc[which(duplicated(annot_qc$Sample.ID)==F),]
@@ -143,6 +144,7 @@ dev.off()
 ################################
 annot_qc_time0<-annot_qc[which(annot_qc$time_days<=0),]
 annot_qc_time6<-annot_qc[which(annot_qc$time_days>=180),]
+summary(glm(annot_qc_time0$clones ~ annot_qc_time0$Phenotype))
 
 ####Association with phenotype
 tiff("Results/boxplot_clones_0_6.tiff",h=1800,w=2000,res=300)
@@ -398,6 +400,13 @@ example_table<-annot_qc_time6 %>%
 tiff("Results/Table_All_6.tiff",res=300,w=4000,h=1000)
 grid.table(example_table)
 dev.off()
+
+########## Meta-Analaysis######
+library(metafor)
+yi<-c(1592.3,5393)
+sei<-c(479.7,3194)
+res <- rma(yi,sei=sei,method="DL")
+forest(res)
 
 
 
