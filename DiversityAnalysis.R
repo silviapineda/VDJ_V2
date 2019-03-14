@@ -98,7 +98,7 @@ ggplot(data=annot_qc, aes(x=followup, y=sample, shape=Phenotype, color=Phenotype
 dev.off()
 
 ###Define new variables
-annot_qc$AgeRec<-ifelse(annot_qc$Recipient.Age..TX<=20,"<=20",">20")
+annot_qc$AgeRec<-ifelse(annot_qc$Recipient.Age..TX<=18,"<=18",">18")
 annot_qc$AgeRec<-factor(annot_qc$AgeRec)
 annot_qc$time_days<-annot_qc$Sample.Time.Diference.from.TX..days.
 annot_qc$time_cat<-ifelse(annot_qc$Sample.Time.Diference.from.TX..days.<0,"<0",

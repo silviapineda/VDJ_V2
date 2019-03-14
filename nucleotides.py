@@ -78,7 +78,7 @@ def ProcessSample(nucleotides_Dataframe):
     result = pd.DataFrame([])
     unique_VJCDR3_Series = nucleotides_Dataframe['V_J_lenghCDR3'].unique()
     ##parallelization for each unique VJCDR3
-    pool = Pool(30)
+    pool = Pool(4)
     partialFunction = partial(ProcessGroup, nucleotides_Dataframe, unique_VJCDR3_Series)
     result = pool.map(partialFunction, range(0,len(unique_VJCDR3_Series)))
     return result
@@ -88,14 +88,14 @@ def main():
     ###### Main program ####
     ########################
     print("Start")
-    nucleotides_Dataframe = pd.read_csv("/Users/Pinedasans/VDJ_V2/Data/data_for_cloneInfered_allvgenes_IGH.txt",sep="\t")
+    nucleotides_Dataframe = pd.read_csv("/Users/Pinedasans/VDJ_V2/Data/data_for_cloneInfered_allvgenes_TCR.txt",sep="\t")
     
     result_ClonesInfered = pd.DataFrame([])
     result = ProcessSample(nucleotides_Dataframe)
     result_ClonesInfered = result_ClonesInfered.append(result)
 
     ###Result
-    result_ClonesInfered.to_csv('/Users/Pinedasans/VDJ_V2/Data/ClonesInfered_allvgenes_IGH.csv')
+    result_ClonesInfered.to_csv('/Users/Pinedasans/VDJ_V2/Data/ClonesInfered_allvgenes_TCR.csv')
     print("End")
 
 main()
